@@ -3,16 +3,16 @@ class DartTrajectory
   G = 9.8
 
   def initialize(target_distance, target_height, target_diameter)
-    @target_distance = target_distance
-    @target_height   = target_height
-    @target_diameter = target_diameter
+    @target_distance = target_distance.to_f
+    @target_height   = target_height  .to_f
+    @target_diameter = target_diameter.to_f
   end
 
   def throw(height_from, initial_velocity, initial_elevation_angle)
-    @initial_velocity = initial_velocity
-    @initial_elevation_angle = initial_elevation_angle
+    @initial_velocity        = initial_velocity       .to_f
+    @initial_elevation_angle = initial_elevation_angle.to_f
 
-    height_at_target = height_from + f_trajectory(@target_distance)
+    height_at_target = height_from.to_f + f_trajectory(@target_distance)
     offset_from_center = (height_at_target - @target_height).abs
 
     is_hit = offset_from_center < @target_diameter / 2
