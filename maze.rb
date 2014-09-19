@@ -22,17 +22,13 @@ class Maze
   MESSAGE_WHEN_FAIL = 'Fail'
 
   def shortest_path
-    starts = locate(START)
-    raise ArgumentError, "No start found" if starts.empty?
-    raise ArgumentError, "Multiple starts" if starts.size > 1
+    start_coordinates = locate(START)
+    raise ArgumentError, "No start found" if start_coordinates.empty?
+    raise ArgumentError, "Multiple starts" if start_coordinates.size > 1
 
-    i_col_start, i_row_start = starts.first
-    marked_coordinates = mark_distance(i_col_start, i_row_start)
-    return 1 if marked_coordinates == GOAL
-    return MESSAGE_WHEN_FAIL if marked_coordinates.empty?
-
+    marked_coordinates = start_coordinates
     is_goal_found = false
-    distance = 1
+    distance = 0
     loop do
       next_coordinates = []
       marked_coordinates.each do |i_col, i_row|
@@ -43,10 +39,9 @@ class Maze
         end
         next_coordinates.concat(coordinates)
       end
-      break if marked_coordinates.empty?
       
       distance += 1
-      break if is_goal_found
+      break if is_goal_found || next_coordinates.empty?
       marked_coordinates = next_coordinates
     end
 
