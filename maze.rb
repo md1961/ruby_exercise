@@ -19,31 +19,38 @@ class Maze
     @grids.push(   [WALL] * (@num_cols + 2))
   end
 
+  MESSAGE_WHEN_FAIL = 'Fail'
+
   def shortest_path
     starts = locate(START)
     raise ArgumentError, "No start found" if starts.empty?
     raise ArgumentError, "Multiple starts" if starts.size > 1
 
     i_col_start, i_row_start = starts.first
-    is_goal_found = mark_distance(i_col_start, i_row_start)
-    return 1 if is_goal_found
+    marked_coordinates = mark_distance(i_col_start, i_row_start)
+    return 1 if marked_coordinates == GOAL
+    return MESSAGE_WHEN_FAIL if marked_coordinates.empty?
 
     is_goal_found = false
     distance = 1
     loop do
-      coordinates = locate(distance)
-      break if coordinates.empty?
-
-      coordinates.each do |i_col, i_row|
-        is_goal_found = mark_distance(i_col, i_row)
-        break if is_goal_found
+      next_coordinates = []
+      marked_coordinates.each do |i_col, i_row|
+        coordinates = mark_distance(i_col, i_row)
+        if coordinates == GOAL
+          is_goal_found = true
+          break
+        end
+        next_coordinates.concat(coordinates)
       end
+      break if marked_coordinates.empty?
       
       distance += 1
       break if is_goal_found
+      marked_coordinates = next_coordinates
     end
 
-    is_goal_found ? distance : 'Fail'
+    is_goal_found ? distance : MESSAGE_WHEN_FAIL
   end
 
   def to_s
@@ -55,20 +62,24 @@ class Maze
     def mark_distance(i_col, i_row)
       origin = @grids[i_row][i_col]
       if origin == GOAL || origin == WALL || origin == PATH
-        raise RuntimeError, "Illegal '#{origin}' @(#{i_col}, #{i_row})"
+        raise RuntimeError, "Illegal mark_distance() call with '#{origin}' @(#{i_col}, #{i_row})"
       end
 
+      marked_coordinates = []
       distance = origin == START ? 1 : origin + 1
       [[0, -1], [0, 1], [-1, 0], [1, 0]].each do |d_col, d_row|
-        adjacent = @grids[i_row + d_row][i_col + d_col]
+        _i_col = i_col + d_col
+        _i_row = i_row + d_row
+        adjacent = @grids[_i_row][_i_col]
         if adjacent == GOAL
-          return true
-        elsif adjacent == PATH || adjacent.to_i > distance
-          @grids[i_row + d_row][i_col + d_col] = distance
+          return GOAL
+        elsif adjacent == PATH
+          @grids[_i_row][_i_col] = distance
+          marked_coordinates << [_i_col, _i_row]
         end
       end
 
-      false
+      marked_coordinates
     end
 
     def locate(value)
