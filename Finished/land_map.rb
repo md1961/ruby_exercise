@@ -31,8 +31,20 @@ class LandMap
       seq_num = 1
       1.upto(@n_rows) do |i_row|
         1.upto(@n_cols) do |i_col|
-          has_marked = mark_land(i_row, i_col, seq_num)
-          seq_num += 1 if has_marked
+          next unless land?(i_row, i_col)
+
+          coordinates_to_check = [[i_row, i_col]]
+          loop do
+            next_coordinates = []
+            coordinates_to_check.each do |i_row, i_col|
+              next unless land?(i_row, i_col)
+              coordinates = mark_land(i_row, i_col, seq_num)
+              next_coordinates.concat(coordinates)
+            end
+            break if next_coordinates.empty?
+            coordinates_to_check = next_coordinates
+          end
+          seq_num += 1
         end
       end
 
@@ -40,16 +52,16 @@ class LandMap
     end
 
     def mark_land(i_row, i_col, seq_num)
-      return false if no_land?(i_row, i_col) || marked?(i_row, i_col)
-
       set_value(i_row, i_col, seq_num)
 
-      mark_land(i_row - 1, i_col    , seq_num)
-      mark_land(i_row    , i_col - 1, seq_num)
-      mark_land(i_row + 1, i_col    , seq_num)
-      mark_land(i_row    , i_col + 1, seq_num)
+      coordinates_to_check = []
+      [[-1, 0], [1, 0], [0, -1], [0, 1]].each do |d_i_row, d_i_col|
+        _i_row = i_row + d_i_row
+        _i_col = i_col + d_i_col
+        coordinates_to_check << [_i_row, _i_col] if land?(_i_row, _i_col)
+      end
 
-      true
+      coordinates_to_check
     end
 
     def value_at(i_row, i_col)
@@ -58,6 +70,10 @@ class LandMap
 
     def set_value(i_row, i_col, value)
       @land_matrix[i_row][i_col] = value
+    end
+
+    def land?(i_row, i_col)
+      value_at(i_row, i_col) == LAND
     end
 
     def no_land?(i_row, i_col)
