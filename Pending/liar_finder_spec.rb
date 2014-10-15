@@ -161,7 +161,7 @@ RSpec.describe 'LiarFinder' do
         ])
       }
 
-      it { is_expected.to eq 2 }
+      it { is_expected.to eq 3 }
     end
   end
 
