@@ -3,40 +3,81 @@ require 'set'
 class Paizabook
 
   def initialize
-    @users_with_relations = Set.new
-    @relations = []
+    @h_user_and_relation = {}
+    @id_index_relation = 0
   end
 
-  def add_relationship(index1, index2)
-    @users_with_relations << index1 << index2
-
-    relation1 = @relations.find { |relation| relation.include?(index1) }
-    relation2 = @relations.find { |relation| relation.include?(index2) }
+  def add_relation(user1, user2)
+    relation1 = @h_user_and_relation[user1]
+    relation2 = @h_user_and_relation[user2]
     if relation1 && relation2
-      @relations.delete(relation1)
-      @relations.delete(relation2)
-      @relations << (relation1 + relation2)
+      relation1.relate(relation2)
     elsif relation1
-      relation1 << index2
+      relate(user2, relation1)
     elsif relation2
-      relation2 << index1
+      relate(user1, relation2)
     else
-      @relations << Set.new([index1, index2])
+      relation = Relation.new(@id_index_relation)
+      relate(user1, relation)
+      relate(user2, relation)
+
+      @id_index_relation += 1
     end
   end
 
-  def related?(index1, index2)
-    return false unless @users_with_relations.include?(index1)
-    return false unless @users_with_relations.include?(index2)
+  def related?(user1, user2)
+    relation1 = @h_user_and_relation[user1]
+    relation2 = @h_user_and_relation[user2]
+    !!relation1 && relation1.related?(relation2)
+  end
 
-    @relations.each do |relation|
-      is_1_included = relation.include?(index1)
-      is_2_included = relation.include?(index2)
-      return true  if is_1_included && is_2_included
-      return false if is_1_included || is_2_included
+  def to_s
+    @h_user_and_relation.map { |u, r| "#{u}: #{r.index}" }.join("\n") + "\n\n"
+  end
+
+  private
+
+    def relate(user, relation)
+      @h_user_and_relation[user] = relation
     end
 
-    false
+  class Relation
+    attr_reader :index, :relations
+
+    def initialize(index)
+      @index = index
+      @relations = Set.new
+    end
+
+    def relate(other)
+      return if self.related?(other)
+
+      new_relations = [other]
+      new_relations += other.relations.reject { |relation| self.related?(relation) }
+
+      @relations += new_relations
+
+      new_relations.each do |relation|
+        relation.relate(self)
+      end
+    end
+
+    def related?(other)
+      self == other || @relations.include?(other)
+    end
+
+    def ==(other)
+      return false if other.nil?
+      self.index == other.index
+    end
+
+    def eql?(other)
+      self == other
+    end
+
+    def hash
+      @index.hash
+    end
   end
 end
 
@@ -53,7 +94,7 @@ if __FILE__ == $0
 
   queries.each do |command, index1, index2|
     if command == 0
-      pb.add_relationship(index1, index2)
+      pb.add_relation(index1, index2)
     else
       puts pb.related?(index1, index2) ? 'yes' : 'no'
     end
